@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Server port="8005" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <Listener className="org.apache.catalina.core.JasperListener" />
+  <Listener className="org.apache.catalina.mbeans.ServerLifecycleListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+
+  <GlobalNamingResources>
+    <Resource name="UserDatabase" auth="Container" type="org.apache.catalina.UserDatabase" description="User database that can be updated and saved"
+      factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml" />
+  </GlobalNamingResources>
+
+  <Service name="Catalina">
+
+    <Connector port="80" protocol="HTTP/1.1" connectionTimeout="20000" redirectPort="8443" />
+    <Engine name="Catalina" defaultHost="localhost">
+
+      <Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase" />
+      <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true" xmlValidation="false"
+        xmlNamespaceAware="false">
+        <Context debug="1" path="" reloadable="false" docBase="C:\devel\workplace\teztour\www.erayagency.com\WebContent"
+          workDir="C:\devel\workplace\teztour\www.erayagency.com\work">
+
+          <Manager className="org.apache.catalina.session.PersistentManager" debug="0" saveOnRestart="true"
+            maxActiveSessions="-1" minIdleSwap="-1" maxIdleSwap="-1" maxIdleBackup="-1">
+            
+            <!-- 
+            create table tomcat_sessions (
+  session_id     varchar(100) not null primary key,
+  valid_session  char(1) not null,
+  max_inactive   int not null,
+  last_access    bigint not null,
+  app_name       varchar(255),
+  session_data   mediumblob,
+  KEY kapp_name(app_name)
+);
+
+select session_id, valid_session, max_inactive , last_access , app_name from  tomcat_sessions
+             -->
+            
+            <Store className="org.apache.catalina.session.JDBCStore" driverName="org.gjt.mm.mysql.Driver"
+              connectionURL="jdbc:mysql://10.90.9.111/web?user=webuser&amp;password=password" 
+              sessionTable="tomcat_sessions"
+              sessionAppCol="app_name" 
+              sessionIdCol="session_id" 
+              sessionDataCol="session_data" 
+              sessionValidCol="valid_session" 
+              sessionMaxInactiveCol="max_inactive"
+              sessionLastAccessedCol="last_access" 
+              
+              checkInterval="600" debug="99" />
+            </Manager>
+
+        </Context>
+      </Host>
+    </Engine>
+  </Service>
+</Server>

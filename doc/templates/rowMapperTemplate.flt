@@ -1,0 +1,38 @@
+<#setting locale="en_US">
+<#include "typeFunctions.flt">
+package com.iati.admin.service.jdbc.rowmapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.springframework.jdbc.core.RowMapper;
+
+<#assign rowMapperMap={"x":1} >
+
+<#list java.methods as method>
+ <#assign key>${method.name}<#if method.params?exists>${method.params?size}</#if></#assign>
+  <#if returnmap[key]?exists>
+	<#assign rowMapperName="${returnmap[key].className}" >  
+    <#if !rowMapperMap[rowMapperName]?exists>
+ public class ${returnmap[key].className}RowMapper implements RowMapper<${returnmap[key].className}> {
+
+    @Override
+	public ${returnmap[key].className} mapRow(ResultSet rset, int rowNo) throws SQLException {
+		${returnmap[key].className} model = new ${returnmap[key].className}();
+		
+		<#assign  rowNo=1 >  
+		<#list returnmap[key].fields as field>
+			<#if !field.final && !field.static && hasSetter(returnmap[key],field)> 
+		  model.set${field.name?cap_first}(rset.get${sql2JavaRowMapType(field.type)}(${rowNo}));
+		  <#assign  rowNo=rowNo+1>
+		  </#if>  
+		</#list>
+		
+		return model;
+	}
+}
+<#assign rowMapperMap=rowMapperMap + {"${rowMapperName}":1} >
+</#if>
+</#if>
+</#list>

@@ -1,0 +1,85 @@
+<#setting locale="en_US">
+<#include "typeFunctions.flt">
+package com.iati.admin.service.jdbc.proc;
+
+import java.sql.Types;
+import java.util.List;
+
+import org.springframework.jdbc.core.RowMapper;
+import com.iati.admin.service.jdbc.BaseService;
+import com.iati.admin.service.jdbc.ProcedureDefinition;
+
+<#assign rowMapperMap={"x":1} >
+<#assign procMap={"x":1} >
+
+@SuppressWarnings("unchecked")
+public class ${java.className?substring(1)} extends BaseService implements ${java.className} {
+<#list java.methods as method>
+ <#assign key>${method.name}<#if method.params?exists>${method.params?size}</#if></#assign>
+  <#if !(procMap[key]?exists)> 
+	private ProcedureDefinition proc${key};
+	<#assign procMap=procMap + {"${key}":1} >
+</#if>
+</#list>
+
+    @Override
+	public void afterPropertiesSet() throws Exception {
+<#assign procMap={"x":1} >	
+<#list java.methods as method>
+<#assign key>${method.name}<#if method.params?exists>${method.params?size}</#if></#assign>
+<#assign procName=camel2SQLNameProcName(method.name)>
+ <#if !(procMap[key]?exists)> 
+    <#if (procName?length >30)> /*changeName : ${procName?length-30} */</#if>
+	proc${key} =new ProcedureDefinition(getSchemaName(), "PKG_ADMIN_${camel2SQLNamePackageName(java.className)}.${procName}"
+			<#if returnmap[key]?exists>,new ${returnmap[key].className}RowMapper()<#elseif method.type == "void">,false<#else>,${getSqlType(method.type)}</#if><#list method.params as param>,${getSqlType(param.type)}</#list>);
+
+<#assign procMap=procMap + {"${key}":1} >
+</#if>
+</#list>
+   }
+
+<#list java.methods as method>
+ <#assign key>${method.name}<#if method.params?exists>${method.params?size}</#if></#assign>
+
+  <#if returnmap[key]?exists>
+  
+    <#if method.type.className=="List">
+    @Override
+	public List<${returnmap[key].className}> ${method.name}( <#list method.params as param>${param.type}<#if param.type.genericClass?exists><${param.type.genericClass.className}></#if> ${param.name} <#if param_has_next>,</#if></#list>) {
+	    List<${returnmap[key].className}> result = ( List<${returnmap[key].className}>)executeProcedure(proc${method.name}<#if method.params?exists>${method.params?size}</#if><#list method.params as param>,${param.name}</#list>);
+		return result;
+	}
+	<#else>
+	@Override
+	public ${returnmap[key].className} ${method.name}( <#list method.params as param>${param.type}<#if param.type.genericClass?exists><${param.type.genericClass.className}></#if> ${param.name} <#if param_has_next>,</#if></#list>) {
+	    ${returnmap[key].className} result = ( ${returnmap[key].className}) executeProcedureSingle(proc${method.name}<#if method.params?exists>${method.params?size}</#if><#list method.params as param>,${param.name}</#list>);
+		return result;
+	}
+
+	</#if>
+	
+	
+ <#else>
+    @Override
+	 <#if method.type == "void">
+	 	public void ${method.name}( <#list method.params as param>${param.type}<#if param.type.genericClass?exists><${param.type.genericClass.className}></#if> ${param.name} <#if param_has_next>,</#if></#list>) {
+	 	executeProcedureNoReturn(proc${method.name}<#if method.params?exists>${method.params?size}</#if><#list method.params as param>,${param.name}</#list>);
+	 <#else>
+	 	<#if method.type.primitive>
+	 	public ${method.type} ${method.name}( <#list method.params as param>${param.type}<#if param.type.genericClass?exists><${param.type.genericClass.className}></#if> ${param.name} <#if param_has_next>,</#if></#list>) {
+	 	${method.type} value = executeProcedure${returnFunctionSuffix(method.type)}(proc${method.name}<#if method.params?exists>${method.params?size}</#if><#list method.params as param>,${param.name}</#list>);
+		return value;
+	 	<#else>
+	 	public ${method.type.className} ${method.name}( <#list method.params as param>${param.type}<#if param.type.genericClass?exists><${param.type.genericClass.className}></#if> ${param.name} <#if param_has_next>,</#if></#list>) {
+	 	${method.type.className} value = (${method.type.className})executeProcedureSingle(proc${method.name}<#if method.params?exists>${method.params?size}</#if><#list method.params as param>,${param.name}</#list>);
+		return value;
+		</#if>	 
+	 </#if>
+	}
+ </#if>
+	
+</#list>
+
+
+ 
+}
