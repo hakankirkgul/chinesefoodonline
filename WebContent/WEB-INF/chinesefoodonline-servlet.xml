@@ -1,0 +1,151 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+		
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations"><list>
+	      	<value>classpath:jdbc.properties</value>
+	    </list></property>
+	</bean>
+	
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    	<property name="driverClassName" value="${jdbc.className}"/>
+      	<property name="url" value="${jdbc.url}"/>
+      	<property name="username" value="${jdbc.username}"/>
+      	<property name="password" value="${jdbc.password}"/>
+    </bean>
+    
+    <bean id="userManagerService" class="com.chinesefoodonline.jdbc.implementation.UserManagerService">
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>
+    
+    <bean id="menuService" class="com.chinesefoodonline.jdbc.implementation.MenuService">
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>
+    
+    <bean id="commentService" class="com.chinesefoodonline.jdbc.implementation.CommentService">
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>
+    
+    <bean id="orderService" class="com.chinesefoodonline.jdbc.implementation.OrderService">
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>
+    
+    <bean id="reservationService" class="com.chinesefoodonline.jdbc.implementation.ReservationService">
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>
+
+	<mvc:resources mapping="/js/**" location="/js/" />
+	<mvc:resources mapping="/css/**" location="/css/" />
+	<mvc:resources mapping="/images/**" location="/images/" />
+	
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/views/"/>
+		<property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+    		<mvc:exclude-mapping path="/images/**"/>
+    		<mvc:exclude-mapping path="/js/**"/>
+    		<mvc:exclude-mapping path="/css/**"/>
+    		<mvc:exclude-mapping path="/"/>
+    		<mvc:exclude-mapping path="/menu"/>
+    		<mvc:exclude-mapping path="/categoryMenu"/>
+    		<mvc:exclude-mapping path="/signup"/>
+		    <bean id="loginInterceptor" class="com.chinesefoodonline.interceptors.LoginInterceptor">
+				<property name="loginPage" value="/login" />
+			</bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="com.chinesefoodonline.exception.UserNotAuthenticatedException">login</prop>
+			</props>
+		</property>
+	</bean>
+	
+	<bean name="baseAction" abstract="true" class="com.chinesefoodonline.actions.BaseController">
+	</bean>
+	
+	<bean name="/" parent="baseAction">
+		<property name="pageName" value="index" />
+	</bean>
+	
+	<bean name="/menu" parent="baseAction" class="com.chinesefoodonline.actions.MenuController">
+		<property name="pageName" value="menu" />
+		<property name="menuService" ref="menuService" />
+	</bean>
+	
+	<bean name="/login" parent="baseAction" class="com.chinesefoodonline.actions.LoginController">
+		<property name="pageName" value="login" />
+		<property name="userManagerService" ref="userManagerService" />
+	</bean>
+	
+	<bean name="/logout" parent="baseAction" class="com.chinesefoodonline.actions.LogoutController">
+		<property name="pageName" value="index" />
+	</bean>
+	
+	<bean name="/categoryMenu" parent="baseAction" class="com.chinesefoodonline.actions.CategoryMenuController">
+		<property name="pageName" value="categoryMenu" />
+		<property name="menuService" ref="menuService" />
+	</bean>
+	
+	<bean name="/contact" parent="baseAction" class="com.chinesefoodonline.actions.CommentController">
+		<property name="pageName" value="contact" />
+		<property name="commentService" ref="commentService" />
+	</bean>
+	
+	<bean name="/comments" parent="baseAction" class="com.chinesefoodonline.actions.ManageCommentsController">
+		<property name="pageName" value="comments" />
+		<property name="commentService" ref="commentService" />
+	</bean>
+	
+	<bean name="/users" parent="baseAction" class="com.chinesefoodonline.actions.ManageUsersController">
+		<property name="pageName" value="users" />
+		<property name="userManagerService" ref="userManagerService" />
+	</bean>
+	
+	<bean name="/signup" parent="baseAction" class="com.chinesefoodonline.actions.RegisterController">
+		<property name="pageName" value="signup" />
+		<property name="userManagerService" ref="userManagerService" />
+	</bean>
+	
+	<bean name="/manageMenu" parent="baseAction" class="com.chinesefoodonline.actions.ManageMenuController">
+		<property name="pageName" value="manageMenu" />
+		<property name="menuService" ref="menuService" />
+	</bean>
+	
+	<bean name="/delivery" parent="baseAction">
+		<property name="pageName" value="delivery" />
+	</bean>
+	
+	<bean name="/order" parent="baseAction" class="com.chinesefoodonline.actions.CreateOrderController">
+		<property name="pageName" value="order" />
+		<property name="menuService" ref="menuService" />
+		<property name="orderService" ref="orderService" />
+	</bean>
+	
+	<bean name="/orders" parent="baseAction" class="com.chinesefoodonline.actions.OrdersController">
+		<property name="pageName" value="orders" />
+		<property name="orderService" ref="orderService" />
+	</bean>
+	
+	<bean name="/reservation" parent="baseAction" class="com.chinesefoodonline.actions.CreateReservationController">
+		<property name="pageName" value="reservation" />
+		<property name="reservationService" ref="reservationService" />
+	</bean>
+	
+	<bean name="/reservations" parent="baseAction" class="com.chinesefoodonline.actions.ReservationsController">
+		<property name="pageName" value="reservations" />
+		<property name="reservationService" ref="reservationService" />
+	</bean>
+
+</beans>
